@@ -2,6 +2,7 @@ library(shiny)
 library(shinyearr)
 library(tidyverse)
 library(forcats)
+library(Hmisc)
 
 ui <- fluidPage(
   titlePanel("Voice Gender Classification Demo"),
@@ -58,6 +59,29 @@ server <- function(input, output) {
     
     output$auc_ <- renderText({
       paste("AUC:", toString(auc))
+    })
+    
+    # Scale down to between 0 and 1
+    scaledRecording <- rvs$recording
+    scaledRecording$value <- (scaledRecording$value - 
+                                min(scaledRecording$value))/(diff(range(scaledRecording$value)))
+    scaledRecording$frequency <- (scaledRecording$frequency - 
+                                    min(scaledRecording$frequency))/(diff(range(scaledRecording$frequency)))
+    
+    # Calculate meanfreq
+    myVoice<-wtd.mean(scaledRecording$frequency, scaledRecording$value, na.rm=T)
+    
+    # SD
+    myVoice<-c(myVoice, sqrt(wtd.var(scaledRecording$frequency, scaledRecording$value, na.rm=T)))
+    
+    # Q25, Median, Q75
+    myVoice<-c(myVoice, wtd.quantile(x=scaledRecording$frequency, probs=c(0.25, 0.5, 0.75), weights=scaledRecording$value, na.rm=T))
+
+    # IQR
+    myVoice<-c(myVoice, myVoice[5] - myVoice[3])
+    
+    output$finalClassification <- renderText({
+      predictGender(fit, data.frame(t(myVoice)))
     })
   })
 }

@@ -8,7 +8,16 @@ library("ggfortify")
 library("ROCR")
 
 
-x<-read.csv("voice.csv", header = T)
+voiceData<-read.csv("voice.csv", header = T)
+
+# Limit our frequency dist. features to:
+# - meanFreq
+# - sd
+# - median
+# - Q25
+# - Q75
+# - IQR
+x<-voiceData[,c(1:6,21)]
 y<-x$label
 
 # Create train/test split
@@ -35,7 +44,7 @@ classPlot<-ggplot(data=pcad, aes(x=PC1, y=PC2, color=(fit.classes < 0.5))) + geo
   ggtitle("Voice Data along First Two Principal Components")  + 
   scale_color_discrete(name="Gender", labels=c("Female", "Male")) +
   theme(plot.title = element_text(hjust = 0.5))
-print(classPlot)
+# print(classPlot)
 
 # Plot ROC curve and calculate AUC
 fit.prob.rocr <- prediction(fit.prob, y.test)
@@ -48,3 +57,15 @@ rocPlot <- ggplot(data=rocData, aes(x=FPR, y=TPR)) + geom_line() +
 # print(rocPlot)
 auc <-performance(fit.prob.rocr, "auc")
 auc <- auc@y.values
+
+
+predictGender <- function(svm_classifier, x) {
+  colnames(x) <- c("meanfreq", "sd", "median", "Q25", "Q75", "IQR")
+  gender<-predict(svm_classifier, x)
+  print(gender)
+  if (gender < 0.375734362365086) {
+    return("Female")
+  } else {
+    return("Male")
+  }
+}
