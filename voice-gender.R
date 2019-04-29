@@ -3,8 +3,8 @@
 
 library("e1071")
 library("kernlab")
-library("tidyverse")
 library("ggplot2")
+library("ggfortify")
 library("ROCR")
 
 
@@ -14,10 +14,10 @@ y<-x$label
 # Create train/test split
 train_idx<-sample(nrow(x), replace=F, size=nrow(x)*0.8)
 x.train<-x[train_idx,-ncol(x)]
-y.train<-y[train_idx]
+y.train<-as.numeric(y[train_idx]=="male")
 
 x.test<-x[-(train_idx),-ncol(x)]
-y.test<-y[-(train_idx)]
+y.test<-as.numeric(y[-(train_idx)]=="male")
 
 # Create dataframe
 dat = data.frame(x.train, y.train)
@@ -26,21 +26,25 @@ dat = data.frame(x.train, y.train)
 fit <- svm(y.train ~ ., data=x.train, probability=T)
 
 # Predict on training dataset
-fit.classes <- predict(fit, x.test, label.ordering=c("male", "female"))
-fit.prob <- predict(fit, type="prob", newdata=x.test, probability = TRUE, label.ordering=c("male", "female"))
+fit.classes <- predict(fit, x.test)
+fit.prob <- predict(fit, newdata=x.test, type="prob", probability = T)
 
 # Plot on first two dimensions
 pcad <- prcomp(data.frame(x.test), scale=T)
-classPlot<-ggplot(pcad, aes(x=PC1, y=PC2, color=fit.classes)) + geom_point() +
-  ggtitle("Voice Data along First Two Principal Components") +
+classPlot<-ggplot(data=pcad, aes(x=PC1, y=PC2, color=(fit.classes < 0.5))) + geom_point() +
+  ggtitle("Voice Data along First Two Principal Components")  + 
+  scale_color_discrete(name="Gender", labels=c("Female", "Male")) +
   theme(plot.title = element_text(hjust = 0.5))
-# print(classPlot)
+print(classPlot)
 
-fit.prob.rocr <- prediction(attr(fit.prob, "probabilities")[,2], y.test, label.ordering=c("male", "female"))
+# Plot ROC curve and calculate AUC
+fit.prob.rocr <- prediction(fit.prob, y.test)
 fit.perf <- performance(fit.prob.rocr, "tpr","fpr")
 rocData <- data.frame(fit.perf@x.values, fit.perf@y.values)
 colnames(rocData) <- c("FPR", "TPR")
-rocPlot <- ggplot(rocData, aes(x=FPR, y=TPR)) + geom_line() + ggtitle("ROC of SVM Classifier on Voice Gender Data") + theme(plot.title = element_text(hjust = 0.5))
-print(rocPlot)
+rocPlot <- ggplot(data=rocData, aes(x=FPR, y=TPR)) + geom_line() +
+  ggtitle("ROC of SVM Classifier on Voice Gender Data") +
+  theme(plot.title = element_text(hjust = 0.5))
+# print(rocPlot)
 auc <-performance(fit.prob.rocr, "auc")
 auc <- auc@y.values
