@@ -64,10 +64,11 @@ predictGender <- function(svm_classifier, x) {
   gender<-predict(svm_classifier, x)
   print(gender)
   # Threshold determined by using external voice sample.
-  if (gender < 0.375734362365086) {
-    return("Female")
+  # if (gender < 0.375734362365086) {
+  if (gender < 0.35) {
+    return(paste("Female", gender))
   } else {
-    return("Male")
+    return(paste("Male", gender))
   }
 }
 

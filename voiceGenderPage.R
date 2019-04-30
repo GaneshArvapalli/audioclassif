@@ -11,7 +11,7 @@ ui <- fluidPage(
     sidebarPanel(
       helpText("Press the button to start recording your voice.
                Make sure the app can use your mic. Try reading these 
-               instructions as a sample."),
+               instructions for example!"),
       shinyearrUI("my_recorder")
     ),
     mainPanel(
