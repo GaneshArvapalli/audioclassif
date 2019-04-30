@@ -63,9 +63,14 @@ predictGender <- function(svm_classifier, x) {
   colnames(x) <- c("meanfreq", "sd", "median", "Q25", "Q75", "IQR")
   gender<-predict(svm_classifier, x)
   print(gender)
+  # Threshold determined by using external voice sample.
   if (gender < 0.375734362365086) {
     return("Female")
   } else {
     return("Male")
   }
 }
+
+# Example
+print(predictGender(fit, x.train[1,]))
+
