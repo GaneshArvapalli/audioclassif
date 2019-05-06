@@ -12,11 +12,12 @@ ui <- fluidPage(
       helpText("Press the button to start recording your voice.
                Make sure the app can use your mic. Try reading these 
                instructions for example!"),
-      shinyearrUI("my_recorder")
+      shinyearrUI("my_recorder"),
+      hr(),
+      plotOutput("frequencyPlot")
     ),
     mainPanel(
       h3(textOutput("finalClassification"), align="center"),
-      plotOutput("frequencyPlot"),
       plotOutput("classificationPlot"),
       plotOutput("rocPlot_"),
       h5(textOutput("auc_"), align="center")
